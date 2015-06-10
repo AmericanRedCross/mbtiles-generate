@@ -1,0 +1,51 @@
+<script src="//ajax.aspnetcdn.com/ajax/jquery.validate/1.13.1/jquery.validate.min.js"></script>
+<script src="//cdn.datatables.net/1.10.7/js/jquery.dataTables.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.2/handlebars.min.js"></script>
+<!-- <script src="/js/users.js"></script> -->
+<link href="//cdn.datatables.net/1.10.7/css/jquery.dataTables.min.css" rel="stylesheet">
+<header class="row header">
+	<div class="col-md-12">
+		<h1>Map</h1>
+	</div>
+</header>
+<nav class="navbar row">
+	<ul class="nav navbar-nav">
+		<li>
+			<a href="#" id="add-toggle" data-toggle="modal" data-target=""><b class="glyphicon glyphicon-plus"></b> Create mbtiles</a>
+		</li>
+	</ul>
+</nav>
+<div class="row">
+	<div class="col-md-12">
+		{{#if error}}
+			<div class="alert alert-danger alert-dismissable">
+				  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+				  <p><strong>Sorry, we've hit a snag.</strong> <em>{{error}}</em></p>
+			</div>
+		{{/if}}
+
+		<h3>map</h3>
+
+
+
+		<!-- <div id="add-user-modal" class="modal fade" role="dialog">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h4 class="modal-title">Create User</h4>
+					</div>
+					<form action="/user" method="POST" id="add-user">
+						<div class="modal-body">
+						</div>
+						<div class="modal-footer">
+							<div class="btn-group">
+								<button class="btn btn-success sharp">Create</button>
+								<button type="button" class="btn btn-warning sharp" data-dismiss="modal">Cancel</button>
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div> -->
+	</div>
+</div>
