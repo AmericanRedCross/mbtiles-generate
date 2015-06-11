@@ -44,7 +44,7 @@ passport.deserializeUser(function(id, done) {
 
 //Express config
 var express = require('express');
-var exphbs  = require('express3-handlebars');
+var exphbs  = require('express-handlebars');
 var multer  = require('multer');
 var morgan  = require('morgan');
 var cookieParser = require('cookie-parser');
