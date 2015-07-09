@@ -50,6 +50,7 @@ var morgan  = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var session = require('express-session');
+
 var app = express();
 
 app.use(morgan('dev'));     /* 'default', 'short', 'tiny', 'dev' */
@@ -169,86 +170,6 @@ app.get('/api/user/:email',function(req,res) {
 	}
 })
 
-// app.post('/asset/:id',function(req,res) {
-// 	if (req.user) {
-// 		var opts = { '_id' :  req.params.id };
-// 		if (req.user.permissions != "super") {
-// 			opts.user = req.user.email;
-// 		}
-// 		switch(req.body["_method"]) {
-// 			case "DELETE":
-// 				ctrl.deleteAsset(req,res,opts);
-// 			break;
-// 			case "PUT":
-// 				ctrl.updateAsset(req,res,opts);
-// 			break;
-// 			default:
-// 				res.redirect("/");
-// 			break;
-// 		}
-// 	} else {
-// 		res.redirect("/");
-// 	}
-// })
-//
-// app.post('/asset',function(req,res) {
-// 	if (req.user) {
-// 		ctrl.createAsset(req,res);
-// 	} else {
-// 		res.redirect("/");
-// 	}
-// })
-//
-// app.get('/assets',function(req,res) {
-// 	if (req.user) {
-// 		ctrl.getAssets(req.user,function(result) {
-// 			res.render('listAssets',{
-// 				user:req.user,
-// 				assets:result,
-// 				opts:localConfig,
-// 				error:req.flash("createMessage") || req.flash("editMessage") || req.flash("deleteMessage"),
-// 				edit:req.query.edit
-// 			});
-// 		})
-// 	} else {
-// 		req.session.redirectTo = "/assets";
-// 		res.redirect("/");
-// 	}
-// })
-//
-// app.get('/api/assets',function(req,res) {
-// 	res.header('Access-Control-Allow-Origin', '*');
-// 	ctrl.getAssets({permissions:"super"},function(result) {
-// 		for(var i=0;i<result.length;i++) {
-// 			delete result[i].__v;
-// 			delete result[i].user;
-// 		}
-// 		res.json(result);
-// 	})
-// })
-//
-// app.get('/api/asset/:id/file',function(req,res) {
-// 	res.header('Access-Control-Allow-Origin', '*');
-// 	ctrl.getAssetFile(req.params.id,function() {
-// 		res.status(404).send();
-// 	},req,res)
-// })
-//
-// app.get('/api/asset/:id/thumbnail',function(req,res) {
-// 	res.header('Access-Control-Allow-Origin', '*');
-// 	ctrl.getAssetThumb(req.params.id,function() {
-// 		res.status(404).send();
-// 	},req,res)
-// })
-//
-// app.get('/api/asset/:id',function(req,res) {
-// 	res.header('Access-Control-Allow-Origin', '*');
-// 	ctrl.getAsset(req.params.id,function(asset) {
-// 		delete asset.__v;
-// 		delete asset.user;
-// 		res.json(asset);
-// 	})
-// })
 
 app.get('/',function (req,res) {
 	res.render('home',{
@@ -260,20 +181,43 @@ app.get('/',function (req,res) {
 
 app.get('/map',function(req,res) {
 	if (req.user) {
-		ctrl.getAssets(req.user,function(result) {
+		// ctrl.getAssets(req.user,function(result) {
 			res.render('map',{
 				user:req.user,
-				assets:result,
+				// assets:result,
 				opts:localConfig,
 				error:req.flash("createMessage") || req.flash("editMessage") || req.flash("deleteMessage"),
 				edit:req.query.edit
 			});
-		})
+		// })
 	} else {
 		req.session.redirectTo = "/map";
 		res.redirect("/");
 	}
 })
+
+app.post('/map',function(req,res) {
+
+	var spawn = require('child_process').spawn,
+    ls    = spawn('tl', ['copy', '-z', '13', '-Z', '14', '-b', '-16.977481842041012 14.752141311434283 -16.89044952392578 14.818034430867115', 'http://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', 'mbtiles://./test.mbtiles']);
+		// ls    = spawn('curl', ['-i', 'https://api.developmentseed.org/osm']);
+		// ls    = spawn('pwd')
+				// stdout: /Users/danbjoseph/Documents/GitHub/AmericanRedCross/mbtiles-generate
+
+	ls.stdout.on('data', function (data) {
+	  console.log('stdout: ' + data);
+		// example data:  14/7420/7510	5783
+	});
+
+	ls.stderr.on('data', function (data) {
+	  console.log('stderr: ' + data);
+	});
+
+	ls.on('close', function (code) {
+	  console.log('child process exited with code ' + code);
+	});
+
+});
 
 
 

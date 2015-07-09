@@ -1,8 +1,16 @@
 <script src="//ajax.aspnetcdn.com/ajax/jquery.validate/1.13.1/jquery.validate.min.js"></script>
 <script src="//cdn.datatables.net/1.10.7/js/jquery.dataTables.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.2/handlebars.min.js"></script>
-<!-- <script src="/js/users.js"></script> -->
-<!-- <link href="//cdn.datatables.net/1.10.7/css/jquery.dataTables.min.css" rel="stylesheet"> -->
+<script src="/bower_components/leaflet/dist/leaflet.js"></script>
+<script src="/bower_components/leaflet/dist/leaflet-src.js"></script>
+<script src="/bower_components/leaflet-draw/dist/leaflet.draw.js"></script>
+<script src="/bower_components/leaflet-draw/dist/leaflet.draw-src.js"></script>
+<script src="/js/Control.Geocoder.js"></script>
+<script src="/js/tiles.js"></script>
+<link rel="stylesheet" href="/bower_components/leaflet/dist/leaflet.css" />
+<link rel="stylesheet" href="/bower_components/leaflet-draw/dist/leaflet.draw.css" />
+<link rel="stylesheet" href="/css/Control.Geocoder.css" />
+
 <header class="row header">
 	<div class="col-md-12">
 		<h1>Map</h1>
@@ -11,7 +19,7 @@
 <nav class="navbar row" style="margin-bottom: 0;">
 	<ul class="nav navbar-nav">
 		<li>
-			<a href="#" id="add-toggle" data-toggle="modal" data-target=""><b class="glyphicon glyphicon-plus"></b> Create mbtiles</a>
+			<a href="#" id="add-toggle" data-toggle="modal" data-target="#create-tiles-modal"><b class="glyphicon glyphicon-plus"></b> Create mbtiles</a>
 		</li>
 	</ul>
 </nav>
@@ -92,6 +100,15 @@
 			var drawControl = new L.Control.Draw(options);
 			map.addControl(drawControl);
 			// set actions after draw
+
+			var tilesSettings = {
+				name: '',
+				xmax: 0,
+				ymax: 0,
+				xmin: 0,
+				ymin: 0
+			}
+
 			map.on('draw:created', function (e) {
 		    var type = e.layerType,
 		        layer = e.layer;
@@ -100,20 +117,27 @@
 	    	// add new polygon to map
 	    	drawnItems.addLayer(layer);
 				// zoom to new polygon
-				console.log(layer.getBounds());
 		  	map.fitBounds(layer.getBounds());
+
+				tilesSettings.xmax = layer.getBounds()._northEast.lat
+				tilesSettings.ymax = layer.getBounds()._northEast.lng
+				tilesSettings.xmin = layer.getBounds()._southWest.lat
+				tilesSettings.ymin = layer.getBounds()._southWest.lng
+
+				console.log(tilesSettings)
+
 			});
 
 		</script>
 
 
-		<!-- <div id="add-user-modal" class="modal fade" role="dialog">
+		<div id="create-tiles-modal" class="modal fade" role="dialog">
 			<div class="modal-dialog">
 				<div class="modal-content">
 					<div class="modal-header">
-						<h4 class="modal-title">Create User</h4>
+						<h4 class="modal-title">Create mbtiles</h4>
 					</div>
-					<form action="/user" method="POST" id="add-user">
+					<form action="/map" method="POST" id="create-tiles">
 						<div class="modal-body">
 						</div>
 						<div class="modal-footer">
@@ -125,6 +149,6 @@
 					</form>
 				</div>
 			</div>
-		</div> -->
+		</div>
 	</div>
 </div>
