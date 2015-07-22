@@ -1,154 +1,163 @@
 <script src="//ajax.aspnetcdn.com/ajax/jquery.validate/1.13.1/jquery.validate.min.js"></script>
 <script src="//cdn.datatables.net/1.10.7/js/jquery.dataTables.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.2/handlebars.min.js"></script>
-<script src="/bower_components/leaflet/dist/leaflet.js"></script>
-<script src="/bower_components/leaflet/dist/leaflet-src.js"></script>
-<script src="/bower_components/leaflet-draw/dist/leaflet.draw.js"></script>
-<script src="/bower_components/leaflet-draw/dist/leaflet.draw-src.js"></script>
-<script src="/js/Control.Geocoder.js"></script>
 <script src="/js/tiles.js"></script>
-<link rel="stylesheet" href="/bower_components/leaflet/dist/leaflet.css" />
-<link rel="stylesheet" href="/bower_components/leaflet-draw/dist/leaflet.draw.css" />
-<link rel="stylesheet" href="/css/Control.Geocoder.css" />
 
-<header class="row header">
-	<div class="col-md-12">
-		<h1>Map</h1>
+{{#if error}}
+	<div class="alert alert-danger alert-dismissable">
+		  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+		  <p><strong>Sorry, we've hit a snag.</strong> <em>{{error}}</em></p>
 	</div>
-</header>
-<nav class="navbar row" style="margin-bottom: 0;">
-	<ul class="nav navbar-nav">
-		<li>
-			<a href="#" id="add-toggle" data-toggle="modal" data-target="#create-tiles-modal"><b class="glyphicon glyphicon-plus"></b> Create mbtiles</a>
-		</li>
-	</ul>
-</nav>
+{{/if}}
 <div class="row">
-	<div class="col-md-12" style="padding: 0;">
-		{{#if error}}
-			<div class="alert alert-danger alert-dismissable">
-				  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-				  <p><strong>Sorry, we've hit a snag.</strong> <em>{{error}}</em></p>
-			</div>
-		{{/if}}
-
-		<div id="map"></div>
-
-		<script>
-
-			function sizeMap(){
-				$('#map').css("height", function(){
-					return $(window).height() - 130;
-				});
-			}
-			$(window).resize(function(){
-				sizeMap();
-			});
-			sizeMap();
-
-
-			var mapUrl = 'http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png';
-			var mapAttribution = 'Map data &copy; <a href="http://openstreetmap.org" target="_blank">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/" target="_blank">CC-BY-SA</a> | Map style by <a href="http://hot.openstreetmap.org" target="_blank">H.O.T.</a> | &copy; <a href="http://redcross.org" title="Red Cross" target="_blank">Red Cross</a> 2013 | <a title="Disclaimer" onClick="showDisclaimer();">Disclaimer</a>';
-			var mapTiles = L.tileLayer(mapUrl, {attribution: mapAttribution});
-
-			var map = L.map('map', {
-			    zoom: 3,
-			    center: [0,0],
-			    scrollWheelZoom: false,
-			    layers: [mapTiles]
-			});
-
-			// add leaflet Geocoder search
-			// ===========================
-			var geocoder = L.Control.geocoder().addTo(map);
-			// customize the geocoder result selection function so only centers map and doesn't add a marker
-			geocoder.markGeocode = function(result) {
-			      this._map.fitBounds(result.bbox);
-			};
-
-			// leaflet draw functionality
-			// ==========================
-
-			// initialise the FeatureGroup to store editable layers
-			var drawnItems = new L.FeatureGroup();
-			map.addLayer(drawnItems);
-
-			var shapeOptions = {
-			  clickable: false,
-			  color: '#7a0177',
-			  fill: false
-			};
-			// set options
-			var options = {
-			    draw: {
-			        polyline: false,
-			        circle: false,
-			        marker: false,
-			        polygon: false,
-			        rectangle: {
-			            shapeOptions: shapeOptions
-			        }
-			    },
-			    edit: {
-			        featureGroup: drawnItems, //REQUIRED!!
-			        remove: false,
-			        edit: false
-
-			    }
-			};
-			// add draw control to map w options
-			var drawControl = new L.Control.Draw(options);
-			map.addControl(drawControl);
-			// set actions after draw
-
-			var tilesSettings = {
-				name: '',
-				xmax: 0,
-				ymax: 0,
-				xmin: 0,
-				ymin: 0
-			}
-
-			map.on('draw:created', function (e) {
-		    var type = e.layerType,
-		        layer = e.layer;
-	    	// clear previous polygon
-	    	drawnItems.clearLayers();
-	    	// add new polygon to map
-	    	drawnItems.addLayer(layer);
-				// zoom to new polygon
-		  	map.fitBounds(layer.getBounds());
-
-				tilesSettings.xmax = layer.getBounds()._northEast.lat
-				tilesSettings.ymax = layer.getBounds()._northEast.lng
-				tilesSettings.xmin = layer.getBounds()._southWest.lat
-				tilesSettings.ymin = layer.getBounds()._southWest.lng
-
-				console.log(tilesSettings)
-
-			});
-
-		</script>
-
-
-		<div id="create-tiles-modal" class="modal fade" role="dialog">
-			<div class="modal-dialog">
-				<div class="modal-content">
-					<div class="modal-header">
-						<h4 class="modal-title">Create mbtiles</h4>
-					</div>
-					<form action="/map" method="POST" id="create-tiles">
-						<div class="modal-body">
-						</div>
-						<div class="modal-footer">
-							<div class="btn-group">
-								<button class="btn btn-success sharp">Create</button>
-								<button type="button" class="btn btn-warning sharp" data-dismiss="modal">Cancel</button>
-							</div>
-						</div>
-					</form>
+	<div id="map" style="position:absolute; bottom:0; top:0; right:0;">
+		<div id="map-area-instructions">
+			<div id="select-area-button" class="btn btn-default btn-md disabled">Select Area</div>
+			<p id="instructions">Zoom in to where you want to map.</p>
+		</div>
+		<div id="request-mbtiles">
+			<div class="form-group">
+				<label for="exampleInputEmail1">Name this area:</label>
+				<div class="input-group">
+		    	<input type="text" class="form-control" id="file-name" placeholder="area-name">
+					<div class="input-group-addon">.mbtiles</div>
 				</div>
-			</div>
+				<label class="input-warning" for="exampleInputEmail1">*No spaces or special characters.*</label>
+		  </div>
+			<div id="generate-mbtiles" class="btn btn-success btn-md disabled">Generate MBTiles</div>
 		</div>
 	</div>
 </div>
+<script src='https://api.tiles.mapbox.com/mapbox.js/v2.2.1/mapbox.js'></script>
+<link href='https://api.tiles.mapbox.com/mapbox.js/v2.2.1/mapbox.css' rel='stylesheet' />
+<script>
+
+function sizeMap() {
+	$("#map").css("left", function() {
+		return $(window).width() >= 1025 ? "25%" : "0";
+	})
+}
+$(window).resize(function(){
+	sizeMap();
+});
+sizeMap();
+
+
+// Provide your access token
+L.mapbox.accessToken = 'pk.eyJ1IjoiYWFyb25kZW5uaXMiLCJhIjoiem5LLURoYyJ9.T3tswGTI5ve8_wE-a02cMw';
+// Create a map in the div #map
+var map = L.mapbox.map('map', 'aarondennis.humanitarian', {
+						zoomControl: false
+					}).addControl(
+						L.mapbox.geocoderControl('mapbox.places', {
+      				autocomplete: true,
+							position: 'topright'
+						})
+					).setView([0, 0], 2);;
+
+// Change zoom control location
+new L.Control.Zoom({ position: 'topright' }).addTo(map);
+
+var selectable = false;
+box = undefined;
+
+map.on('zoomend', function() {
+	selectable = map.getZoom() >= 7 ? true : false;
+
+	if(selectable) {
+		$('#map-area-instructions').css('background-color', 'rgba(200,255,200,0.8)')
+		$('#instructions').css('display', 'none').text('');
+		$('#select-area-button').removeClass('disabled');
+
+		$('#select-area-button').on('click', function() {
+			$('#request-mbtiles').css('display', 'none');
+			startDrawing();
+		})
+
+	} else {
+		$('#map-area-instructions').css('background-color', 'rgba(255,200,200,0.8)')
+		$('#instructions').css('display', 'block').text('Zoom in to where you want to map.');
+		$('#select-area-button').addClass('disabled');
+	}
+
+});
+
+var areaNW = undefined;
+var areaSE = undefined;
+
+function startDrawing() {
+
+	console.log('starting to draw');
+	$('#instructions').css('display', 'block').text('Click and drag to select where you want to map.');
+
+	map.dragging.disable();
+
+	$('#map').css('cursor', 'crosshair');
+
+	map.on('mousedown', draw);
+
+}
+
+
+function draw(e) {
+
+		start = [e.latlng['lat'], e.latlng['lng']];
+
+		selectArea(start, start);
+		map.on('mousemove', dragRectangle);
+
+		map.on('mouseup', function(e) {
+
+			map.off('mousemove', dragRectangle);
+			$('#request-mbtiles').css('display', 'block');
+
+			$('#map').css('cursor', 'default');
+			map.off('mousedown', draw);
+
+			map.fitBounds(bounds);
+
+		});
+
+}
+
+function dragRectangle(e) {
+	end = [e.latlng['lat'], e.latlng['lng']];
+	selectArea(start, end);
+}
+
+// draw rectangles
+var bounds = undefined;
+
+function selectArea(nw, se) {
+	// define rectangle geographical bounds
+	bounds = [nw, se];
+	// create an orange rectangle
+	if (box) { map.removeLayer(box); }
+	box = L.rectangle(bounds, {
+		color: "#ed1b2e",
+		fillOpacity: 0.2,
+		weight: 2,
+		clickable: false
+	});
+	box.addTo(map);
+}
+
+var validRequestExists = false;
+
+$('#file-name').keyup(function(){
+	var fileName = $('#file-name').val();
+
+	var pattern = /^[a-zA-Z0-9-_]*$/
+	var valid = pattern.test(fileName);
+
+	if(valid) {
+		validRequestExists = true;
+		$('#generate-mbtiles').removeClass('disabled');
+	} else if (validRequestExists) {
+		validRequestExists = false;
+		$('#generate-mbtiles').addClass('disabled');
+	}
+
+});
+
+</script>

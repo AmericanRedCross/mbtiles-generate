@@ -207,8 +207,12 @@ app.post('/map',function(req,res) {
 	// save (or move?) the mbtiles file somewhere else (amazon s3?)
 	// in mongo update the entry with file size, generation end time  (change/remove 'in-progress' tag if used)
 
-	var spawn = require('child_process').spawn,
-    ls    = spawn('tl', ['copy', '-z', '13', '-Z', '14', '-b', '-16.977481842041012 14.752141311434283 -16.89044952392578 14.818034430867115', 'http://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', 'mbtiles://./test.mbtiles']);
+	var spawn = require('child_process').spawn
+
+	console.log(req.route);
+
+	/*
+	var ls    = spawn('tl', ['copy', '-z', '13', '-Z', '14', '-b', '-16.977481842041012 14.752141311434283 -16.89044952392578 14.818034430867115', 'http://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', 'mbtiles://./test.mbtiles']);
 
 	ls.stdout.on('data', function (data) {
 	  console.log('stdout: ' + data);
@@ -222,6 +226,7 @@ app.post('/map',function(req,res) {
 	ls.on('close', function (code) {
 	  console.log('child process exited with code ' + code);
 	});
+	*/
 
 });
 

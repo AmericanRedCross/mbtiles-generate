@@ -18,39 +18,39 @@
 		<div class="container-fluid">
 			<div id="nav-toggle"><i class="fa fa-bars"></i></div>
 			<header id="site-header" class="navbar navbar-inverse" role="navigation">
-	          	<h1><a class="navbar-brand" href="/">{{opts.siteName}}</a></h1>
-	          	{{#if user}}
-      				<form class="navbar-form" role="form" action="/user/logout" method="POST">
-      					<button type="submit" class="btn btn-warning sharp" title="Log Out"><b class="glyphicon glyphicon-export"></b></button>
-      					<p>{{user.email}}</p>
-	    			</form>
-	          		<hr>
-	          		<nav>
-		          		<ul class="nav navbar-nav">
-		          			<li>
-		          				<a href="/map"><b class="glyphicon glyphicon-globe"></b> New Area</a>
-		          			</li>
-										<li>
-											<a href="/"><b class="glyphicon glyphicon-globe"></b> Manage Assets</a>
-										</li>
+          	<h1><a class="navbar-brand" href="/">{{opts.siteName}}</a></h1>
+          	{{#if user}}
+    				<form class="navbar-form" role="form" action="/user/logout" method="POST">
+    					<button type="submit" class="btn btn-warning sharp" title="Log Out"><b class="glyphicon glyphicon-export"></b></button>
+    					<p>{{user.email}}</p>
+    			</form>
+          		<hr>
+          		<nav>
+	          		<ul class="nav navbar-nav">
+	          			<li>
+	          				<a href="/map"><b class="glyphicon glyphicon-globe"></b> New Area</a>
+	          			</li>
+									<li>
+										<a href="/"><b class="glyphicon glyphicon-globe"></b> Manage Assets</a>
+									</li>
 
-		          			{{#eq user.permissions "super"}}
-			          			<li>
-			          				<a href="/users"><b class="glyphicon glyphicon-user"></b> Manage Users</a>
-			          			</li>
-		          			{{/eq}}
-		          		</ul>
-	          		</nav>
-	          	{{/if}}
-		    </header>
+	          			{{#eq user.permissions "super"}}
+		          			<li>
+		          				<a href="/users"><b class="glyphicon glyphicon-user"></b> Manage Users</a>
+		          			</li>
+	          			{{/eq}}
+	          		</ul>
+          		</nav>
+          	{{/if}}
+						<footer id="site-footer">
+							<div class="row row-logo">
+				        <a href="http://redcross.org" target="_blank"><img src="media/redcross-logo.png" id="arclogo"></a>
+			        </div>
+						</footer>
+	    </header>
 			<section id="site-content">
 				{{{body}}}
 			</section>
-			<footer id="site-footer">
-				<div class="row row-logo">
-			        <a href="http://redcross.org" target="_blank"><img src="media/redcross-logo.png" id="arclogo"></a>
-		        </div>
-			</footer>
 		</div>
 	</body>
 </html>
