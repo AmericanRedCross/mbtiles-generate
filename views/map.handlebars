@@ -32,6 +32,15 @@
 <link href='https://api.tiles.mapbox.com/mapbox.js/v2.2.1/mapbox.css' rel='stylesheet' />
 <script>
 
+var areaNW = undefined,
+    areaSE = undefined,
+		box = undefined,
+		selectable = false,
+    validRequestExists = false,
+		fileName = undefined,
+		bounds = undefined,
+		request = { fileName: undefined, bounds: undefined };
+
 function sizeMap() {
 	$("#map").css("left", function() {
 		return $(window).width() >= 1025 ? "25%" : "0";
@@ -58,9 +67,6 @@ var map = L.mapbox.map('map', 'aarondennis.humanitarian', {
 // Change zoom control location
 new L.Control.Zoom({ position: 'topright' }).addTo(map);
 
-var selectable = false;
-box = undefined;
-
 map.on('zoomend', function() {
 	selectable = map.getZoom() >= 7 ? true : false;
 
@@ -81,9 +87,6 @@ map.on('zoomend', function() {
 	}
 
 });
-
-var areaNW = undefined;
-var areaSE = undefined;
 
 function startDrawing() {
 
@@ -123,10 +126,10 @@ function draw(e) {
 function dragRectangle(e) {
 	end = [e.latlng['lat'], e.latlng['lng']];
 	selectArea(start, end);
-}
 
-// draw rectangles
-var bounds = undefined;
+	console.log((start[0]-end[0]) * (start[1] - end[1]));
+
+}
 
 function selectArea(nw, se) {
 	// define rectangle geographical bounds
@@ -142,22 +145,42 @@ function selectArea(nw, se) {
 	box.addTo(map);
 }
 
-var validRequestExists = false;
-
 $('#file-name').keyup(function(){
-	var fileName = $('#file-name').val();
+	fileName = $('#file-name').val();
 
 	var pattern = /^[a-zA-Z0-9-_]*$/
-	var valid = pattern.test(fileName);
+	var valid = pattern.test(fileName) && fileName !== '';
 
 	if(valid) {
 		validRequestExists = true;
 		$('#generate-mbtiles').removeClass('disabled');
+
+		$('#generate-mbtiles').off().on('click', requestMBTiles);
+
 	} else if (validRequestExists) {
 		validRequestExists = false;
 		$('#generate-mbtiles').addClass('disabled');
+
+		$('#generate-mbtiles').off('click', requestMBTiles);
+
 	}
 
 });
+
+function requestMBTiles() {
+
+	console.log('clicked');
+
+	request.fileName = fileName;
+	request.bounds = bounds;
+
+	$.post('/map', request, function(data) {
+		if(data==='done')
+      {
+        alert("login success");
+      }
+	});
+
+}
 
 </script>

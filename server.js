@@ -136,6 +136,9 @@ app.post('/user/:email',function(req,res) {
 })
 
 app.post('/user',function(req,res) {
+
+	console.log(req);
+
 	if (req.user && req.user.permissions == "super") {
 		ctrl.createUser(req,res);
 	} else {
@@ -198,35 +201,69 @@ app.get('/map',function(req,res) {
 
 app.post('/map',function(req,res) {
 
-	// need to grab the coordinates and name from the request box
-	// and feed them into the ls variable
-	// replace the ESRI server with the HOT tile server
-	// in mongo save the name, bbox, generation start time, generation end time: null (or 'in-progress' tag)
-	// monitor the process
-	// log when completed
-	// save (or move?) the mbtiles file somewhere else (amazon s3?)
-	// in mongo update the entry with file size, generation end time  (change/remove 'in-progress' tag if used)
+	if (req.user) {
 
-	var spawn = require('child_process').spawn
+		// user's email address
+		var userEmail = req.user.email;
+		// user's id
+		var userID = req.user.id;
 
-	console.log(req.route);
+		// there should be a directory for each user where that user's mbtiles will write to
 
-	/*
-	var ls    = spawn('tl', ['copy', '-z', '13', '-Z', '14', '-b', '-16.977481842041012 14.752141311434283 -16.89044952392578 14.818034430867115', 'http://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', 'mbtiles://./test.mbtiles']);
+		// replace the ESRI server with the HOT tile server
+		// in mongo save the name, bbox, generation start time, generation end time: null (or 'in-progress' tag)
+		// monitor the process
+		// log when completed
+		// save (or move?) the mbtiles file somewhere else (amazon s3?)
+		// in mongo update the entry with file size, generation end time  (change/remove 'in-progress' tag if used)
 
-	ls.stdout.on('data', function (data) {
-	  console.log('stdout: ' + data);
-		// example data:  14/7420/7510	5783
-	});
+		// Takes request and pulls out information about bounding box for requested area and the requested file name
+		var body = req.body;
 
-	ls.stderr.on('data', function (data) {
-	  console.log('stderr: ' + data);
-	});
+		var fileName = body.fileName;
 
-	ls.on('close', function (code) {
-	  console.log('child process exited with code ' + code);
-	});
-	*/
+		var north = body.bounds[0][0] > body.bounds[1][0] ? body.bounds[0][0] : body.bounds[1][0],
+				south = body.bounds[0][0] < body.bounds[1][0] ? body.bounds[0][0] : body.bounds[1][0],
+				east  = body.bounds[0][1] > body.bounds[1][1] ? body.bounds[0][1] : body.bounds[1][1],
+				west  = body.bounds[0][1] < body.bounds[1][1] ? body.bounds[0][1] : body.bounds[1][1];
+
+		var bounds = west + ' ' + north + ' ' + east + ' ' + south;
+
+		console.log('bounds = ' + bounds);
+
+
+		// spawn used for calling system commands
+		var spawn = require('child_process').spawn
+
+		// Calls `tl` command line tool with options about min and max zoom, requested bounding box,
+		// tile service, and desired file name for mbtiles output
+		var ls = spawn('tl',
+										['copy',
+										'-z', '10',
+										'-Z', '11',
+										'-b', bounds,
+										'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+										'mbtiles://./mbtiles/' /*+ userID + '/'*/ + fileName + '.mbtiles']); // there should be folders for each user, but there's not yet
+
+		ls.stdout.on('data', function (data) {
+		  console.log('stdout: ' + data);
+			// example data:  14/7420/7510	5783
+		});
+
+		ls.stderr.on('data', function (data) {
+		  console.log('stderr: ' + data);
+		});
+
+		ls.on('close', function (code) {
+		  console.log('child process exited with code ' + code);
+		});
+
+
+		res.end('yes');
+
+	} else {
+		res.redirect("/"); // catches if there's no logged in user
+	}
 
 });
 
