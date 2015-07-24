@@ -5,6 +5,7 @@
   `mongod --dbpath /path/mbtiles-generate/data`
 - restore the database containing the default login:    
   `mongorestore -d mbtiles-generate /path/mmbtiles-generate/data/dump/mbtiles-generate`
+- unless you restart your computer, you shouldn't have to run the `mongod` and `mongorestore` commands again
 - should output something like the following:    
 
 ```
@@ -16,6 +17,8 @@
 2015-07-09T15:18:54.191-0400	finished restoring mbtiles-generate.users
 2015-07-09T15:18:54.191-0400	done
 ```
+
+- run `npm install`
 - start the app: `node server.js`
 - go to localhost:8888
 - login with...
