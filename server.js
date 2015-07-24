@@ -222,12 +222,14 @@ app.post('/map',function(req,res) {
 
 		var fileName = body.fileName;
 
-		var north = body.bounds[0][0] > body.bounds[1][0] ? body.bounds[0][0] : body.bounds[1][0],
-				south = body.bounds[0][0] < body.bounds[1][0] ? body.bounds[0][0] : body.bounds[1][0],
-				east  = body.bounds[0][1] > body.bounds[1][1] ? body.bounds[0][1] : body.bounds[1][1],
-				west  = body.bounds[0][1] < body.bounds[1][1] ? body.bounds[0][1] : body.bounds[1][1];
+		var extent = { 'north': 0, 'south': 0, 'east': 0, 'west': 0 };
 
-		var bounds = west + ' ' + north + ' ' + east + ' ' + south;
+		extent['north'] = body.bounds[0][0] > body.bounds[1][0] ? body.bounds[0][0] : body.bounds[1][0],
+		extent['south'] = body.bounds[0][0] < body.bounds[1][0] ? body.bounds[0][0] : body.bounds[1][0],
+		extent['east']  = body.bounds[0][1] > body.bounds[1][1] ? body.bounds[0][1] : body.bounds[1][1],
+		extent['west']  = body.bounds[0][1] < body.bounds[1][1] ? body.bounds[0][1] : body.bounds[1][1];
+
+		var bounds = extent['west'] + ' ' + extent['north'] + ' ' + extent['east'] + ' ' + extent['south'];
 
 		console.log('bounds = ' + bounds);
 
@@ -239,11 +241,11 @@ app.post('/map',function(req,res) {
 		// tile service, and desired file name for mbtiles output
 		var ls = spawn('tl',
 										['copy',
-										'-z', '10',
-										'-Z', '11',
+										'-z', '12',
+										'-Z', '15', // should probably be 19 when this goes live
 										'-b', bounds,
 										'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-										'mbtiles://./mbtiles/' /*+ userID + '/'*/ + fileName + '.mbtiles']); // there should be folders for each user, but there's not yet
+										'mbtiles://./mbtiles/' /*   + userID + '/'   */ + fileName + '.mbtiles']); // there _should_ be folders for each user, but there's not yet
 
 		ls.stdout.on('data', function (data) {
 		  console.log('stdout: ' + data);
@@ -267,6 +269,14 @@ app.post('/map',function(req,res) {
 
 });
 
+function numberOfTiles(extent, minZoom, maxZoom) {
+	return ( ( ( Math.ceil(((extent.east + 180) / 360) * Math.pow(2, minZoom)) -
+						 	 Math.floor(((extent.west + 180) / 360) * Math.pow(2, minZoom)) )
+					 	 *
+					 	 ( Math.ceil(((extent.north + 180) / 360) * Math.pow(2, minZoom)) -
+	 					   Math.floor(((extent.south + 180) / 360) * Math.pow(2, minZoom)) )
+					 ) * Math.pow(2, maxZoom - minZoom) );
+}
 
 
 app.listen(8888);

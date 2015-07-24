@@ -39,6 +39,7 @@ var areaNW = undefined,
     validRequestExists = false,
 		fileName = undefined,
 		bounds = undefined,
+		extent = { 'north': 0, 'south': 0, 'east': 0, 'west': 0 },
 		request = { fileName: undefined, bounds: undefined };
 
 function sizeMap() {
@@ -68,17 +69,14 @@ var map = L.mapbox.map('map', 'aarondennis.humanitarian', {
 new L.Control.Zoom({ position: 'topright' }).addTo(map);
 
 map.on('zoomend', function() {
-	selectable = map.getZoom() >= 7 ? true : false;
+	selectable = map.getZoom() >= 12 ? true : false;
 
 	if(selectable) {
 		$('#map-area-instructions').css('background-color', 'rgba(200,255,200,0.8)')
-		$('#instructions').css('display', 'none').text('');
-		$('#select-area-button').removeClass('disabled');
+		$('#instructions').text('Click above to select an area.');
+		$('#select-area-button').removeClass('disabled').text('Select Area');
 
-		$('#select-area-button').on('click', function() {
-			$('#request-mbtiles').css('display', 'none');
-			startDrawing();
-		})
+		$('#select-area-button').on('click', startDrawing);
 
 	} else {
 		$('#map-area-instructions').css('background-color', 'rgba(255,200,200,0.8)')
@@ -90,10 +88,16 @@ map.on('zoomend', function() {
 
 function startDrawing() {
 
-	console.log('starting to draw');
 	$('#instructions').css('display', 'block').text('Click and drag to select where you want to map.');
 
+	// Disable drag and zoom handlers.
 	map.dragging.disable();
+	map.touchZoom.disable();
+	map.doubleClickZoom.disable();
+	map.scrollWheelZoom.disable();
+
+	// Disable tap handler, if present.
+	if (map.tap) map.tap.disable();
 
 	$('#map').css('cursor', 'crosshair');
 
@@ -104,37 +108,49 @@ function startDrawing() {
 
 function draw(e) {
 
-		start = [e.latlng['lat'], e.latlng['lng']];
+	start = [e.latlng['lat'], e.latlng['lng']];
 
-		selectArea(start, start);
-		map.on('mousemove', dragRectangle);
+	bounds = [start, start]
+	selectArea(bounds);
+	map.on('mousemove', dragRectangle);
 
-		map.on('mouseup', function(e) {
-
-			map.off('mousemove', dragRectangle);
-			$('#request-mbtiles').css('display', 'block');
-
-			$('#map').css('cursor', 'default');
-			map.off('mousedown', draw);
-
-			map.fitBounds(bounds);
-
-		});
+	map.on('mouseup', finishDraw);
+	map.on('mouseup', defaultCursor);
 
 }
+
+function finishDraw(e) {
+
+	map.off('mousedown', draw);
+	map.off('mousemove', dragRectangle);
+	map.off('mouseup', finishDraw);
+	$('#request-mbtiles').css('display', 'block');
+
+	$('#map').css('cursor', 'default');
+
+	map.panTo([(bounds[0][0] + bounds[1][0]) / 2, (bounds[0][1] + bounds[1][1]) / 2]);
+
+	$('#select-area-button').text('Select a Different Area');
+	$('#instructions').text('Name this area below or click above to select a different area.');
+	$('#select-area-button').unbind('click', startDrawing);
+	$('#select-area-button').on('click', restart);
+
+};
 
 function dragRectangle(e) {
-	end = [e.latlng['lat'], e.latlng['lng']];
-	selectArea(start, end);
 
-	console.log((start[0]-end[0]) * (start[1] - end[1]));
+	end = [e.latlng['lat'], e.latlng['lng']];
+
+	bounds = [start, end]
+	selectArea(bounds);
+
+	console.log(numberOfTiles(bounds, 12, 19));
 
 }
 
-function selectArea(nw, se) {
-	// define rectangle geographical bounds
-	bounds = [nw, se];
-	// create an orange rectangle
+function selectArea(bounds) {
+
+	// create a rectangle
 	if (box) { map.removeLayer(box); }
 	box = L.rectangle(bounds, {
 		color: "#ed1b2e",
@@ -144,6 +160,35 @@ function selectArea(nw, se) {
 	});
 	box.addTo(map);
 }
+
+function restart() {
+
+	// Disable drag and zoom handlers.
+	map.dragging.enable();
+	map.touchZoom.enable();
+	map.doubleClickZoom.enable();
+	map.scrollWheelZoom.enable();
+
+	// Disable tap handler, if present.
+	if (map.tap) map.tap.enable();
+
+	$('#request-mbtiles').css('display', 'none');
+
+	map.removeLayer(box);
+
+	$('#select-area-button').unbind('click', restart);
+
+	map.zoomOut();
+
+	$('#map').css('cursor', 'drag');
+	$('#map').on('mousedown', grabbingCursor);
+	$('#map').on('mouseup', dragCursor);
+
+}
+
+function dragCursor() { $('#map').css('cursor', 'drag'); };
+function grabbingCursor() { $('#map').css('cursor', 'grabbing'); };
+function defaultCursor() { $('#map').css('cursor', 'default'); };
 
 $('#file-name').keyup(function(){
 	fileName = $('#file-name').val();
@@ -169,17 +214,36 @@ $('#file-name').keyup(function(){
 
 function requestMBTiles() {
 
-	console.log('clicked');
-
 	request.fileName = fileName;
 	request.bounds = bounds;
 
 	$.post('/map', request, function(data) {
-		if(data==='done')
-      {
-        alert("login success");
-      }
+
 	});
+
+}
+
+function numberOfTiles(bounds, minZoom, maxZoom) {
+
+	extent['north'] = bounds[0][0] > bounds[1][0] ? bounds[0][0] : bounds[1][0],
+	extent['south'] = bounds[0][0] < bounds[1][0] ? bounds[0][0] : bounds[1][0],
+	extent['east']  = bounds[0][1] > bounds[1][1] ? bounds[0][1] : bounds[1][1],
+	extent['west']  = bounds[0][1] < bounds[1][1] ? bounds[0][1] : bounds[1][1];
+
+	var total = 0;
+
+	for (var i = minZoom; i <= maxZoom; i++) {
+
+		total += (
+				( Math.ceil(((extent['east'] + 180) / 360) * Math.pow(2, i)) -
+				  Math.floor(((extent['west'] + 180) / 360) * Math.pow(2, i)) )
+				  *
+				( Math.ceil(((extent['north'] + 180) / 360) * Math.pow(2, i)) -
+				  Math.floor(((extent['south'] + 180) / 360) * Math.pow(2, i)) )
+		);
+	}
+
+	return total;
 
 }
 
